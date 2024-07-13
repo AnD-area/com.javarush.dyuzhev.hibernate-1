@@ -24,11 +24,13 @@ public class PlayerRepositoryDB implements IPlayerRepository {
 
         Properties properties = new Properties();
         properties.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-        properties.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
-        properties.put(Environment.URL, "jdbc:mysql://localhost:3306/rpg");
+        properties.put(Environment.DRIVER, "com.p6spy.engine.spy.P6SpyDriver");
+        properties.put(Environment.URL, "jdbc:p6spy:mysql://localhost:3306/rpg");
         properties.put(Environment.USER, "root");
         properties.put(Environment.PASS, "root");
         properties.put(Environment.HBM2DDL_AUTO, "update");
+//        properties.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
+//        properties.put(Environment.URL, "jdbc:mysql://localhost:3306/rpg");
 
         sessionFactory = new Configuration()
                 .addAnnotatedClass(Player.class)
@@ -77,13 +79,18 @@ public class PlayerRepositoryDB implements IPlayerRepository {
     @Override
     public Optional<Player> findById(long id) {
         try (Session session = sessionFactory.openSession()) {
-            return Optional.ofNullable(session.find(Player.class, id));
+            Player player = session.find(Player.class, id);
+            return Optional.of(player);
         }
     }
 
     @Override
     public void delete(Player player) {
-
+        try (Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            session.remove(player);
+            session.getTransaction().commit();
+        }
     }
 
     @PreDestroy
